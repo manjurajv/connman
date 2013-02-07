@@ -542,6 +542,8 @@ void __connman_tethering_set_disabled(void);
 int __connman_private_network_request(DBusMessage *msg, const char *owner);
 int __connman_private_network_release(const char *path);
 
+const char *__connman_network_bearer2string(enum connman_network_bearer bearer);
+
 #include <connman/provider.h>
 
 connman_bool_t __connman_provider_check_routes(struct connman_provider *provider);

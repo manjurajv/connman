@@ -55,6 +55,17 @@ enum connman_network_error {
 	CONNMAN_NETWORK_ERROR_CONNECT_FAIL    = 4,
 };
 
+enum connman_network_bearer {
+	CONNMAN_NETWORK_BEARER_UNKNOWN    = 0,
+	CONNMAN_NETWORK_BEARER_GPRS       = 1,
+	CONNMAN_NETWORK_BEARER_EDGE       = 2,
+	CONNMAN_NETWORK_BEARER_UMTS       = 3,
+	CONNMAN_NETWORK_BEARER_HSDPA      = 4,
+	CONNMAN_NETWORK_BEARER_HSUPA      = 5,
+	CONNMAN_NETWORK_BEARER_HSPA       = 6,
+	CONNMAN_NETWORK_BEARER_LTE        = 7,
+};
+
 #define CONNMAN_NETWORK_PRIORITY_LOW      -100
 #define CONNMAN_NETWORK_PRIORITY_DEFAULT     0
 #define CONNMAN_NETWORK_PRIORITY_HIGH      100
@@ -126,6 +137,9 @@ connman_uint16_t connman_network_get_frequency(struct connman_network *network);
 int connman_network_set_wifi_channel(struct connman_network *network,
 					connman_uint16_t channel);
 connman_uint16_t connman_network_get_wifi_channel(struct connman_network *network);
+int connman_network_set_bearer(struct connman_network *network,
+							enum connman_network_bearer bearer);
+enum connman_network_bearer connman_network_get_bearer(struct connman_network *network);
 
 int connman_network_set_string(struct connman_network *network,
 					const char *key, const char *value);

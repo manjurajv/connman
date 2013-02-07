@@ -90,6 +90,9 @@ struct connman_network {
 		char *pin_wps;
 	} wifi;
 
+	struct {
+		enum connman_network_bearer bearer;
+	} cellular;
 };
 
 static const char *type2string(enum connman_network_type type)
@@ -107,6 +110,30 @@ static const char *type2string(enum connman_network_type type)
 		return "bluetooth";
 	case CONNMAN_NETWORK_TYPE_CELLULAR:
 		return "cellular";
+	}
+
+	return NULL;
+}
+
+const char *__connman_network_bearer2string(enum connman_network_bearer bearer)
+{
+	switch (bearer) {
+	case CONNMAN_NETWORK_BEARER_UNKNOWN:
+		break;
+	case CONNMAN_NETWORK_BEARER_GPRS:
+		return "gprs";
+	case CONNMAN_NETWORK_BEARER_EDGE:
+		return "edge";
+	case CONNMAN_NETWORK_BEARER_UMTS:
+		return "umts";
+	case CONNMAN_NETWORK_BEARER_HSDPA:
+		return "hsdpa";
+	case CONNMAN_NETWORK_BEARER_HSUPA:
+		return "hsupa";
+	case CONNMAN_NETWORK_BEARER_HSPA:
+		return "hspa";
+	case CONNMAN_NETWORK_BEARER_LTE:
+		return "lte";
 	}
 
 	return NULL;
@@ -1811,6 +1838,21 @@ int connman_network_set_wifi_channel(struct connman_network *network,
 connman_uint16_t connman_network_get_wifi_channel(struct connman_network *network)
 {
 	return network->wifi.channel;
+}
+
+int connman_network_set_bearer(struct connman_network *network,
+							enum connman_network_bearer bearer)
+{
+	DBG("network %p bearer %d", network, bearer);
+
+	network->cellular.bearer = bearer;
+
+	return 0;
+}
+
+enum connman_network_bearer connman_network_get_bearer(struct connman_network *network)
+{
+	return network->cellular.bearer;
 }
 
 /**

@@ -227,6 +227,17 @@ Properties	string State [readonly]
 			indicates connections to a foreign provider when
 			traveling abroad.
 
+		string Bearer [readonly]
+
+			When the service type is cellular then this property is
+			present and contains the bearer technology as reported by
+			the cellular service.
+
+			Possible values are:
+			"none", "gsm", "edge", "umts", "hsdpa", "hsupa",
+			"hspa" (HSDPA and HSUPA at the same time) and
+			"lte"
+
 		array{string} Nameservers [readonly]
 
 			The list of currently active nameservers for this

@@ -123,6 +123,7 @@ struct connman_service {
 	connman_bool_t hidden_service;
 	char *config_file;
 	char *config_entry;
+	enum connman_network_bearer bearer;
 };
 
 static connman_bool_t allow_property_changed(struct connman_service *service);
@@ -1423,6 +1424,22 @@ static void autoconnect_changed(struct connman_service *service)
 				DBUS_TYPE_BOOLEAN, &service->autoconnect);
 }
 
+static void bearer_changed(struct connman_service *service)
+{
+	const char *str;
+
+	if (service->path == NULL)
+		return;
+
+	if (allow_property_changed(service) == FALSE)
+		return;
+
+	str = __connman_network_bearer2string(service->bearer);
+	connman_dbus_property_changed_basic(service->path,
+				CONNMAN_SERVICE_INTERFACE, "Bearer",
+				DBUS_TYPE_BOOLEAN, &str);
+}
+
 static void append_security(DBusMessageIter *iter, void *user_data)
 {
 	struct connman_service *service = user_data;
@@ -1746,7 +1763,6 @@ static void append_provider(DBusMessageIter *iter, void *user_data)
 	if (service->provider != NULL)
 		__connman_provider_append_properties(service->provider, iter);
 }
-
 
 static void settings_changed(struct connman_service *service,
 				struct connman_ipconfig *ipconfig)
@@ -2224,6 +2240,10 @@ static void append_properties(DBusMessageIter *dict, dbus_bool_t limited,
 
 		connman_dbus_dict_append_dict(dict, "Ethernet",
 						append_ethernet, service);
+
+		str = __connman_network_bearer2string(service->bearer);
+		if (str != NULL)
+			connman_dbus_dict_append_basic(dict, "Bearer", DBUS_TYPE_STRING, &str);
 		break;
 	case CONNMAN_SERVICE_TYPE_WIFI:
 	case CONNMAN_SERVICE_TYPE_ETHERNET:
@@ -6449,6 +6469,7 @@ void __connman_service_update_from_network(struct connman_network *network)
 	GSequenceIter *iter;
 	const char *name;
 	connman_bool_t stats_enable;
+	enum connman_network_bearer bearer;
 
 	DBG("network %p", network);
 
@@ -6485,7 +6506,7 @@ void __connman_service_update_from_network(struct connman_network *network)
 roaming:
 	roaming = connman_network_get_bool(service->network, "Roaming");
 	if (roaming == service->roaming)
-		goto sorting;
+		goto bearer;
 
 	stats_enable = stats_enabled(service);
 	if (stats_enable == TRUE)
@@ -6498,6 +6519,16 @@ roaming:
 		stats_start(service);
 
 	roaming_changed(service);
+
+bearer:
+	bearer = connman_network_get_bearer(service->network);
+	if (bearer == service->bearer)
+		goto sorting;
+
+	service->bearer = bearer;
+	need_sort = TRUE;
+
+	bearer_changed(service);
 
 sorting:
 	if (need_sort == TRUE) {
