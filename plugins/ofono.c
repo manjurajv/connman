@@ -157,6 +157,7 @@ struct modem_data {
 	connman_bool_t online;
 	uint8_t interfaces;
 	connman_bool_t ignore;
+	enum connman_network_bearer bearer;
 
 	connman_bool_t set_powered;
 
@@ -1040,6 +1041,8 @@ static void add_network(struct modem_data *modem)
 	connman_network_set_bool(modem->network, "Roaming",
 					modem->roaming);
 
+	connman_network_set_bearer(modem->network, modem->bearer);
+
 	if (connman_device_add_network(modem->device, modem->network) < 0) {
 		connman_network_unref(modem->network);
 		modem->network = NULL;
@@ -1723,6 +1726,40 @@ static void cm_update_powered(struct modem_data *modem,
 	cm_set_powered(modem, TRUE);
 }
 
+static void cm_update_bearer(struct modem_data *modem,
+				DBusMessageIter *value)
+{
+	char *str;
+	enum connman_network_bearer bearer = CONNMAN_NETWORK_BEARER_UNKNOWN;
+
+	dbus_message_iter_get_basic(value, &str);
+
+	DBG("%s ConnectionManager bearer %s", modem->path, str);
+
+	if (g_str_equal(str, "gprs"))
+		bearer = CONNMAN_NETWORK_BEARER_GPRS;
+	else if (g_str_equal(str, "edge"))
+		bearer = CONNMAN_NETWORK_BEARER_EDGE;
+	else if (g_str_equal(str, "umts"))
+		bearer = CONNMAN_NETWORK_BEARER_UMTS;
+	else if (g_str_equal(str, "hsupa"))
+		bearer = CONNMAN_NETWORK_BEARER_HSUPA;
+	else if (g_str_equal(str, "hsdpa"))
+		bearer = CONNMAN_NETWORK_BEARER_HSDPA;
+	else if (g_str_equal(str, "hspa"))
+		bearer = CONNMAN_NETWORK_BEARER_HSPA;
+	else if (g_str_equal(str, "lte"))
+		bearer = CONNMAN_NETWORK_BEARER_LTE;
+
+	if (modem->network) {
+		connman_network_set_bearer(modem->network, bearer);
+		connman_network_update(modem->network);
+	}
+
+	/* Save bearer in modem data to provide it to a connected network at creation time */
+	modem->bearer = bearer;
+}
+
 static gboolean cm_changed(DBusConnection *conn, DBusMessage *message,
 				void *user_data)
 {
@@ -1750,6 +1787,8 @@ static gboolean cm_changed(DBusConnection *conn, DBusMessage *message,
 		cm_update_attached(modem, &value);
 	else if (g_str_equal(key, "Powered") == TRUE)
 		cm_update_powered(modem, &value);
+	else if (g_str_equal(key, "Bearer") == TRUE)
+		cm_update_bearer(modem, &value);
 
 	return TRUE;
 }
@@ -1827,6 +1866,8 @@ static void cm_properties_reply(struct modem_data *modem, DBusMessageIter *dict)
 			cm_update_attached(modem, &value);
 		else if (g_str_equal(key, "Powered") == TRUE)
 			cm_update_powered(modem, &value);
+		else if (g_str_equal(key, "Bearer") == TRUE)
+			cm_update_bearer(modem, &value);
 
 		dbus_message_iter_next(dict);
 	}
